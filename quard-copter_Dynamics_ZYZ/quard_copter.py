@@ -55,6 +55,7 @@ class quard_copter(object):
         theta_threshold = 0.1
         safe_zone = np.array([5,5,5])
         
+        done = False
         done = np.abs(Angle[0]) > phi_threshold or\
                np.abs(Angle[1]) > theta_threshold or\
                np.abs(P[0]) > safe_zone[0] or \
