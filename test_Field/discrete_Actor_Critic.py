@@ -3,7 +3,7 @@
 """
 Created on Wed Aug 22 15:55:07 2018
 
-@author: zhangmingkun
+@author: ZhangYaoZhong
 """
 
 import gym
