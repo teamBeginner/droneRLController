@@ -172,7 +172,7 @@ for i in range(3000):
     '''
     optim_pi_target.zero_grad()
     
-    q_sum = (-(gamma*q_next+r_mini_batch.data-q.detach())*torch.log(p_action)).sum()
+    q_sum = (q_delta.detach()*torch.log(p_action)).sum()
 #    q_sum = (-(gamma*q_next+r_mini_batch.data-q_mean)*torch.log(p_action)).sum()
     q_sum.backward()
 #    for param in pi_target.parameters():
