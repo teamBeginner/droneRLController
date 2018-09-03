@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from torch.distributions import Categorical
 from tensorboardX import SummaryWriter
 
-gamma = 0.998
+gamma = 0.99
 env = gym.make('CartPole-v1')
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 board = SummaryWriter()
@@ -127,7 +127,7 @@ def sim():
 
 duration = []
 
-for i in range(3000):
+for i in range(4000):
     counter = 1
     batch,q_mean = sim()
     s_batch,s_next_batch,a_batch,d_batch,r_batch = batch
