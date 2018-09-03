@@ -191,5 +191,5 @@ for i in range(4000):
     duration.append(counter)
     print(i,' th update')
 
-torch.save(pi_target,'pi_target.pkl')
-torch.save(q_target,'q_target.pkl')
+torch.save(pi_target,'pi_target_2.pkl')
+torch.save(q_target,'q_target_2.pkl')
