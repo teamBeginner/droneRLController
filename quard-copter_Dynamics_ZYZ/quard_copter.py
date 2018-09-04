@@ -6,7 +6,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-
+import mpl_toolkits.mplot3d.axes3d as p3
+import matplotlib.animation as animation
 
 class quard_copter(object):
     
@@ -24,6 +25,7 @@ class quard_copter(object):
         self.P = np.zeros(3)
         self.Mass = 0.4
         self.L = 0.205
+#        self.monitor = plt.figure()
 #        self.sim_Counter = 0
         
     def set_speed(self,speed=np.random.rand(3)):
@@ -159,9 +161,6 @@ class quard_copter(object):
         state = [self.P,self.Speed,self.Angle,self.pqr]
         return state
 
-
-q = quard_copter()
-print(q.step(np.zeros(4)))
 
 
 
