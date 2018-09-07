@@ -22,8 +22,8 @@ board = SummaryWriter()
 class Actor(nn.Module):
     def __init__(self,
                  state_size=3,
-                 h1_size=100,
-                 h2_size=100,
+                 h1_size=200,
+                 h2_size=200,
                  action_size=1):
         super(Actor,self).__init__()
         self.fc_sh1 = nn.Linear(state_size,h1_size)
@@ -50,15 +50,15 @@ class Actor(nn.Module):
 class Critic(nn.Module):
     def __init__(self):
         super(Critic,self).__init__()
-        self.fc_sah1 = nn.Linear(4,100)
+        self.fc_sah1 = nn.Linear(4,128)
         nn.init.xavier_uniform_(self.fc_sah1.weight)
         self.fc_sah1.bias.data.fill_(0.01)
         
-        self.fc_h1h2 = nn.Linear(100,50)
+        self.fc_h1h2 = nn.Linear(128,64)
         nn.init.xavier_uniform_(self.fc_h1h2.weight)
         self.fc_h1h2.bias.data.fill_(0.01)
         
-        self.fc_h2q = nn.Linear(50,1)
+        self.fc_h2q = nn.Linear(64,1)
         nn.init.xavier_uniform_(self.fc_h2q.weight)
         self.fc_h2q.bias.data.fill_(0.01)
         
@@ -73,10 +73,10 @@ class Critic(nn.Module):
 pi_target = Actor().to(device)
 q_target = Critic().to(device)
 
-optim_pi_target = optim.RMSprop(pi_target.parameters(),lr=1e-4)
-optim_q_target = optim.RMSprop(q_target.parameters(),lr=2e-4)
+optim_pi_target = optim.RMSprop(pi_target.parameters(),lr=2e-4)
+optim_q_target = optim.RMSprop(q_target.parameters(),lr=4e-4)
 
-def sim(sim_episode=80):
+def sim(sim_episode=60):
     batch = []
     s_batch = []
     s_next_batch = []
@@ -109,18 +109,18 @@ def sim(sim_episode=80):
     return batch
 
 r_sum = []
-mini_batch_size = 50
-for i in range(2000):
+mini_batch_size = 30
+for i in range(5000):
     batch = sim()
     s_batch,s_next_batch,a_batch,a_next_batch,r_batch = batch
     r_sum.append(np.sum(r_batch))
     if i>1 and i%50==0:
-        board.add_scalar('r_sum_mean',np.mean(r_sum[i-50:i-1]),i)
-        board.add_scalar('r_sum_var',np.var(r_sum[i-50:i-1]),i)
+        board.add_scalar('r_mean',np.mean(r_batch),i)
+        board.add_scalar('r_var',np.var(r_batch),i)
         board.add_histogram('actor net 1 weight',pi_target.fc_sh1.state_dict()['weight'].cpu().numpy(),i)
         board.add_histogram('actor net 2 weight',pi_target.fc_h1h2.state_dict()['weight'].cpu().numpy(),i)
         board.add_histogram('actor net 3 weight',pi_target.fc_h2a.state_dict()['weight'].cpu().numpy(),i)
-        print(np.mean(r_sum[i-50:i-1]))
+#        print(np.mean(r_batch))
     counter = s_batch.shape[0]
     mask = np.random.choice(np.arange(s_batch.shape[0]),mini_batch_size)
     s_mini_batch = s_batch[mask]
@@ -137,16 +137,8 @@ for i in range(2000):
     sa_mini_batch = torch.cat((s_mini_batch,a_mini_batch.view(-1,1)),1)
     sa_mini_batch.requires_grad = True
     sa_next_mini_batch = torch.cat((s_next_mini_batch,a_next_mini_batch.view(-1,1)),1)
-    '''
-        update Critic
-    '''
-    optim_q_target.zero_grad()
     q = q_target(sa_mini_batch)
     q_next = q_target(sa_next_mini_batch).detach()
-    q_delta = q-gamma*q_next-r_mini_batch
-    q_loss = q_delta.pow(2).sum()
-    q_loss.backward(retain_graph=True)
-    optim_q_target.step()
     
     '''
     updata Actor
@@ -154,11 +146,23 @@ for i in range(2000):
     optim_pi_target.zero_grad()
     
     q_sum = -q.sum()
-    q_sum.backward()
+    q_sum.backward(retain_graph=True)
     
     action = pi_target(s_mini_batch)
     action.backward(sa_mini_batch.grad.data[:,3].view(-1,1))
     optim_pi_target.step()
+    
+    '''
+        update Critic
+    '''
+    optim_q_target.zero_grad()
+    
+    q_delta = q-gamma*q_next-r_mini_batch
+    q_loss = q_delta.pow(2).sum()
+    q_loss.backward()
+    optim_q_target.step()
+    
+    
     
 torch.save(pi_target,'pi_target_DAC.pkl')
 torch.save(q_target,'q_target_DAC.pkl')
