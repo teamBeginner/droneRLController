@@ -40,7 +40,7 @@ class Actor(nn.Module):
         self.tanh = nn.Tanh()
         self.relu = nn.ReLU()
         
-        self.bn = nn.BatchNorm1d(256)
+        self.bn = nn.BatchNorm2d(256)
     def forward(self,state):
         h1 = self.relu(self.fc_sh1(state))
         h2 = self.relu(self.fc_h1h2(h1))
@@ -66,7 +66,7 @@ class Critic(nn.Module):
         
         self.relu = nn.ReLU()
         
-        self.bn = nn.BatchNorm1d(128)
+        self.bn = nn.BatchNorm2d(128)
     def forward(self,s):
         h1 = self.relu(self.fc_sah1(s))
         h1 = self.bn(h1)
