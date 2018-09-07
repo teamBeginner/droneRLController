@@ -22,8 +22,8 @@ board = SummaryWriter()
 class Actor(nn.Module):
     def __init__(self,
                  state_size=3,
-                 h1_size=200,
-                 h2_size=200,
+                 h1_size=256,
+                 h2_size=256,
                  action_size=1):
         super(Actor,self).__init__()
         self.fc_sh1 = nn.Linear(state_size,h1_size)
@@ -39,10 +39,12 @@ class Actor(nn.Module):
         self.fc_h2a.bias.data.fill_(0.01)
         self.tanh = nn.Tanh()
         self.relu = nn.ReLU()
-
+        
+        self.bn = nn.BatchNorm1d(256)
     def forward(self,state):
         h1 = self.relu(self.fc_sh1(state))
         h2 = self.relu(self.fc_h1h2(h1))
+        h2 = self.bn(h2)
         action_score = self.fc_h2a(h2)
         action_score = 2*self.tanh(action_score)
         return action_score
@@ -64,8 +66,10 @@ class Critic(nn.Module):
         
         self.relu = nn.ReLU()
         
+        self.bn = nn.BatchNorm1d(128)
     def forward(self,s):
         h1 = self.relu(self.fc_sah1(s))
+        h1 = self.bn(h1)
         h2 = self.relu(self.fc_h1h2(h1))
         q = self.fc_h2q(h2)
         return q
@@ -110,7 +114,7 @@ def sim(sim_episode=60):
 
 r_sum = []
 mini_batch_size = 30
-for i in range(5000):
+for i in range(20000):
     batch = sim()
     s_batch,s_next_batch,a_batch,a_next_batch,r_batch = batch
     r_sum.append(np.sum(r_batch))
