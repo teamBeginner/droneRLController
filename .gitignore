@@ -4,3 +4,14 @@ test_Field/q_target_DAC.pkl
 test_Field/runs/Sep05_17-19-40_zhangmingkundeMacBook-Air.local/events.out.tfevents.1536139180.zhangmingkundeMacBook-Air.local
 test_Field/runs/Sep07_14-03-26_zhangmingkundeMacBook-Air.local/events.out.tfevents.1536300206.zhangmingkundeMacBook-Air.local
 test_Field/runs/Sep07_14-18-13_zhangmingkundeMacBook-Air.local/events.out.tfevents.1536301093.zhangmingkundeMacBook-Air.local
+test_Field/deterministic_Continuous_Actor_Critic.py
+test_Field/discrete_Actor_Critic_2.py
+test_Field/runs/.DS_Store
+test_Field/runs/Sep07_16-21-13_zhangmikundeAir/events.out.tfevents.1536308473.zhangmikundeAir
+test_Field/runs/Sep13_22-34-52_zhangmingkundeMacBook-Air.local/events.out.tfevents.1536849292.zhangmingkundeMacBook-Air.local
+test_Field/runs/Sep13_22-35-14_zhangmingkundeMacBook-Air.local/events.out.tfevents.1536849314.zhangmingkundeMacBook-Air.local
+test_Field/deterministic_Continuous_Actor_Critic.py
+test_Field/discrete_Actor_Critic_2.py
+test_Field/deterministic_Continuous_Actor_Critic.py
+test_Field/discrete_Actor_Critic_2.py
+.DS_Store
