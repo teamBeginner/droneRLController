@@ -16,35 +16,32 @@ import torch
 
 tau = 0.001
 gamma = 0.99
-mini_batch_size = 100
+mini_batch_size = 30
 env = gym.make('Pendulum-v0')
 board = SummaryWriter()
 
 pendulum = simulator.Sim_Gym('Pendulum-v0')
-s_size = pendulum.state_size
-a_size = pendulum.action_size
+s_dim = pendulum.state_dim
+a_dim = pendulum.action_dim
 a_lim = float(pendulum.action_lim)
 
-pi_e,optim_pi_e = NN_Models.gen_Deterministic_Actor(s_size,a_size,a_lim,learing_rate=1e-4)
-pi_t,_ = NN_Models.gen_Deterministic_Actor(s_size,a_size,a_lim)
-q_e,optim_q_e = NN_Models.gen_Critic(s_size,a_size,learnig_rate=1e-3)
-q_t,_ = NN_Models.gen_Critic(s_size,a_size)
+pi_e,optim_pi_e = NN_Models.gen_Deterministic_Actor(s_dim,a_dim,a_lim,learing_rate=1e-4)
+pi_t,_ = NN_Models.gen_Deterministic_Actor(s_dim,a_dim,a_lim)
+q_e,optim_q_e = NN_Models.gen_Critic(s_dim,a_dim,learnig_rate=4e-4)
+q_t,_ = NN_Models.gen_Critic(s_dim,a_dim)
 
 utils.direct_copy(pi_e,pi_t)
 utils.direct_copy(q_e,q_t)
     
-for i in range(4000):
-    batch = pendulum.sim_explore(pi_e,T=300)
+for i in range(20000):
+    batch = pendulum.sim_explore(pi_e,T=100)
    
     mini_batch = utils.sample_mini_batch(batch,mini_batch_size)
     s_mini_batch,s_next_mini_batch,a_mini_batch,r_mini_batch = mini_batch
     
-    if i>1 and i%100==0:
+    if i%50==0:
         board.add_scalar('r_mean',np.mean(r_mini_batch),i)
         board.add_scalar('r_var',np.var(r_mini_batch),i)
-        board.add_histogram('actor net 1 weight',pi_t.fc_sh1.state_dict()['weight'].cpu().numpy(),i)
-        board.add_histogram('actor net 2 weight',pi_t.fc_h1h2.state_dict()['weight'].cpu().numpy(),i)
-        board.add_histogram('actor net 3 weight',pi_t.fc_h2a.state_dict()['weight'].cpu().numpy(),i)
         
     a_mini_batch = torch.from_numpy(a_mini_batch).float().to(NN_Models.device)
     r_mini_batch = torch.from_numpy(r_mini_batch).float().to(NN_Models.device)
@@ -81,10 +78,6 @@ for i in range(4000):
     '''
     utils.soft_update(pi_e,pi_t,tau)
     
-    
-
-
-
 
 
 
