@@ -41,7 +41,6 @@ for i in range(20000):
     
     if i%50==0:
         board.add_scalar('r_mean',np.mean(r_mini_batch),i)
-        board.add_scalar('r_var',np.var(r_mini_batch),i)
         
     a_mini_batch = torch.from_numpy(a_mini_batch).float().to(NN_Models.device)
     r_mini_batch = torch.from_numpy(r_mini_batch).float().to(NN_Models.device)
@@ -78,6 +77,12 @@ for i in range(20000):
     '''
     utils.soft_update(pi_e,pi_t,tau)
     
+    '''
+    save model
+    '''
+    if i>0 and i%2000 == 0:
+        file_name = 'pi_iter'+str(i)+'.pth'
+        torch.save(pi_t.state_dict(),file_name)
 
 
 
