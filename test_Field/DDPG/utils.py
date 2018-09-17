@@ -26,7 +26,8 @@ class OU_process(object):
         self.mu = mu
         self.sig = sig
         self.dt = dt
-    
+        self.action_dim = action_dim
+        
     def sample(self):
         dX = self.theta*(self.mu-self.X)+self.sig*np.sqrt(self.dt)*np.random.randn(self.X.shape[0])
         self.X += dX
@@ -47,7 +48,6 @@ def sample_mini_batch(batch,mini_batch_size):
     r_mini_batch = r_batch[mask]
     mini_batch = s_mini_batch,s_next_mini_batch,a_mini_batch,r_mini_batch
     return mini_batch
-  
 
 
 
