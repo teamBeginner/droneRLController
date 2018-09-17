@@ -15,40 +15,61 @@ HuberLoss = nn.functional.smooth_l1_loss
 MSELoss = nn.functional.mse_loss
 
 
-def gen_Deterministic_Actor(state_size,action_size,action_lim,learing_rate=2e-4):  
+def gen_Deterministic_Actor(state_dim,action_dim,action_lim,learing_rate=1e-4):  
     class Actor(nn.Module):
         def __init__(self,
-                     state_size,
-                     action_size,
+                     state_dim,
+                     action_dim,
                      action_lim,
-                     h1_size=256,
-                     h2_size=256):
+                     h1_dim=256,
+                     h2_dim=256,
+                     h3_dim=128):
             super(Actor,self).__init__()
-            self.fc_sh1 = nn.Linear(state_size,h1_size)
+            self.fc_sh1 = nn.Linear(state_dim,h1_dim)
             nn.init.xavier_uniform_(self.fc_sh1.weight)
             self.fc_sh1.bias.data.fill_(0.02)
             
-            self.fc_h1h2 = nn.Linear(h1_size,h2_size)
+            self.fc_h1h2 = nn.Linear(h1_dim,h2_dim)
             nn.init.xavier_uniform_(self.fc_h1h2.weight)
             self.fc_h1h2.bias.data.fill_(0.02)
             
-            self.fc_h2a = nn.Linear(h2_size,action_size)
+            self.fc_h2a = nn.Linear(h2_dim,action_dim)
             nn.init.xavier_uniform_(self.fc_h2a.weight)
             self.fc_h2a.bias.data.fill_(0.02)
+            
+            self.fc_h2h3 = nn.Linear(h2_dim,h3_dim)
+            nn.init.xavier_uniform_(self.fc_h2h3.weight)
+            self.fc_h2h3.bias.data.fill_(0.02)
+            
+            self.fc_h3a = nn.Linear(h3_dim,action_dim)
+            nn.init.xavier_uniform_(self.fc_h3a.weight)
+            self.fc_h3a.bias.data.fill_(0.02)
+            
             self.tanh = nn.Tanh()
             self.relu = nn.ReLU()
             
-            self.bn = nn.BatchNorm1d(256)
+            self.h1_dim = h1_dim
+            self.h2_dim = h2_dim
+            self.h3_dim = h3_dim
             
-        def forward(self,state):
+            self.bn_h2 = nn.BatchNorm1d(h2_dim)
+
+            
+        def forward(self,state,mode='sim'):
             h1 = self.relu(self.fc_sh1(state))
             h2 = self.fc_h1h2(h1)
+#            if mode == 'train':
+#                h2 = self.bn_h2(h2)
+#            elif mode == 'sim':
+#                h2 = (h2-self.bn_h2.affine)+self.bn_h2.eps
+#                pass
             h2 = self.relu(h2)
-            action_score = self.fc_h2a(h2)
+            h3 = self.relu(self.fc_h2h3(h2))
+            action_score = self.fc_h3a(h3)
             action = self.tanh(action_score)*action_lim
             return action
     
-    pi = Actor(state_size,action_size,action_lim).to(device)
+    pi = Actor(state_dim,action_dim,action_lim).to(device)
     optim_pi = optim.RMSprop(pi.parameters(),lr=learing_rate)
 
     return pi,optim_pi
@@ -57,45 +78,46 @@ def gen_Deterministic_Actor(state_size,action_size,action_lim,learing_rate=2e-4)
 
 
 
-def gen_Critic(state_size,action_size,q_size=1,learnig_rate=2e-4): 
+def gen_Critic(state_dim,action_dim,q_dim=1,learnig_rate=2e-4): 
     class Critic(nn.Module):
         def __init__(self,
-                     state_size,
-                     action_size,
-                     q_size,
-                     h1_size=256,
-                     h2_size=128
+                     state_dim,
+                     action_dim,
+                     q_dim,
+                     h1_dim=256,
+                     h2_dim=128
                      ):
             super(Critic,self).__init__()
-            self.fc_sah1 = nn.Linear(state_size+action_size,h1_size)
+            self.fc_sah1 = nn.Linear(state_dim+action_dim,h1_dim)
             nn.init.xavier_uniform_(self.fc_sah1.weight)
             self.fc_sah1.bias.data.fill_(0.02)
             
-            self.fc_h1h2 = nn.Linear(h1_size,h2_size)
+            self.fc_h1h2 = nn.Linear(h1_dim,h2_dim)
             nn.init.xavier_uniform_(self.fc_h1h2.weight)
             self.fc_h1h2.bias.data.fill_(0.02)
             
-            self.fc_h2q = nn.Linear(h2_size,q_size)
+            self.fc_h2q = nn.Linear(h2_dim,q_dim)
             nn.init.xavier_uniform_(self.fc_h2q.weight)
             self.fc_h2q.bias.data.fill_(0.02)
             
             self.relu = nn.ReLU()
             
+            self.h1_dim = h1_dim
+            self.h2_dim = h2_dim
             
-        def forward(self,s,a):
+            self.bn_h1 = nn.BatchNorm1d(h1_dim)
+            
+        def forward(self,s,a,mode='sim'):
             sa = torch.cat((s,a),1)
-            h1 = self.relu(self.fc_sah1(sa))
+            h1 = self.fc_sah1(sa)
+#            if mode == 'train':
+#                h1 = self.bn_h1(h1)
+            h1 = self.relu(h1)
             h2 = self.relu(self.fc_h1h2(h1))
             q = self.fc_h2q(h2)
             return q
         
-    q = Critic(state_size,action_size,q_size).to(device)
+    q = Critic(state_dim,action_dim,q_dim).to(device)
     optim_q = optim.RMSprop(q.parameters(),lr=learnig_rate)
     
     return q,optim_q
-
-
-
-
-
-
