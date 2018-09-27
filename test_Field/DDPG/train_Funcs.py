@@ -42,8 +42,6 @@ def train_DDPG(config_DDPG,config_sim,config_Actor,config_Critic):
     utils.direct_copy(pi_e,pi_t)
     utils.direct_copy(q_e,q_t)
     
-    if env_name == 'quard_Copter':
-        env = simulator.Sim_QC()
         
     for i in range(train_eps):
         batch = env.sim_explore(pi_e,sim_steps,do_render)
