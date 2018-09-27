@@ -90,7 +90,7 @@ def train_DDPG(config_DDPG,config_sim,config_Actor,config_Critic):
         '''
         save model
         '''
-        if i>0 and i%2000 == 0:
+        if i>0 and i%20000 == 0:
             file_name = 'pi_iter'+str(i)+'.pth'
             torch.save(pi_t.state_dict(),file_name)
             
