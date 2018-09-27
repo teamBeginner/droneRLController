@@ -1,12 +1,8 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import mpl_toolkits.mplot3d.axes3d as p3
-import matplotlib.animation as animation
 from direct.showbase.ShowBase import ShowBase
-from panda3d.core import LVector3
-import torch
+from panda3d.core import *
 import NN_Models
-import utils
+import vis3D
 
 device = NN_Models.device
 
@@ -138,6 +134,9 @@ class quard_Copter(object):
         
         state = [self.P,self.Speed,self.Angle,self.pqr]
         return state
+
+
+
 
 #class sim_Window(ShowBase):
 #    def __init__(self,mode='explore'):

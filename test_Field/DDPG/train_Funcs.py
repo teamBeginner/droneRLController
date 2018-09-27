@@ -23,30 +23,33 @@ def train_DDPG(config_DDPG,config_sim,config_Actor,config_Critic):
     q_dim,h1_dim_q,h2_dim_q,lr_q = config_Critic
     
     if env_name in gym_list:
-        env = simulator.Sim_Gym(env_name)
-    elif env_name == 'quard_Copter':       
+        env = simulator.Sim_Gym(env_name,do_render)
+        
+    elif env_name == 'quard_Copter':
         env = simulator.Sim_QC()
         
     s_dim = env.state_dim
     a_dim = env.action_dim
     a_lim = float(env.action_lim)
     
-    pi_e,optim_pi_e = NN_Models.gen_Deterministic_Actor(s_dim,a_dim,a_lim,learing_rate=lr_pi,h1_dim_pi,h2_dim_pi,h3_dim_pi)
-    pi_t,_ = NN_Models.gen_Deterministic_Actor(s_dim,a_dim,a_lim,learing_rate=lr_pi,h1_dim_pi,h2_dim_pi,h3_dim_pi)
-    q_e,optim_q_e = NN_Models.gen_Critic(s_dim,a_dim,q_dim,learnig_rate=lr_q,h1_dim_q,h2_dim_q)
-    q_t,_ = NN_Models.gen_Critic(s_dim,a_dim,q_dim,learnig_rate=lr_q,h1_dim_q,h2_dim_q)
+    pi_e,optim_pi_e = NN_Models.gen_Deterministic_Actor(s_dim,a_dim,a_lim,\
+                                                        lr_pi,h1_dim_pi,h2_dim_pi,h3_dim_pi)
+    pi_t,_ = NN_Models.gen_Deterministic_Actor(s_dim,a_dim,a_lim,lr_pi,\
+                                               h1_dim_pi,h2_dim_pi,h3_dim_pi)
+    q_e,optim_q_e = NN_Models.gen_Critic(s_dim,a_dim,q_dim,lr_q,h1_dim_q,h2_dim_q)
+    q_t,_ = NN_Models.gen_Critic(s_dim,a_dim,q_dim,lr_q,h1_dim_q,h2_dim_q)
     
     utils.direct_copy(pi_e,pi_t)
     utils.direct_copy(q_e,q_t)
+    
+    if env_name == 'quard_Copter':
+        env = simulator.Sim_QC()
         
     for i in range(train_eps):
-        batch = env.sim_explore(pi_e,T=sim_steps,do_render)
+        batch = env.sim_explore(pi_e,sim_steps,do_render)
        
         mini_batch = utils.sample_mini_batch(batch,mini_batch_size)
         s_mini_batch,s_next_mini_batch,a_mini_batch,r_mini_batch = mini_batch
-        
-#        if i%50==0:
-#            board.add_scalar('r_mean',np.mean(r_mini_batch),i)
             
         a_mini_batch = torch.from_numpy(a_mini_batch).float().to(NN_Models.device)
         r_mini_batch = torch.from_numpy(r_mini_batch).float().to(NN_Models.device)
@@ -90,3 +93,6 @@ def train_DDPG(config_DDPG,config_sim,config_Actor,config_Critic):
         if i>0 and i%2000 == 0:
             file_name = 'pi_iter'+str(i)+'.pth'
             torch.save(pi_t.state_dict(),file_name)
+            
+
+
