@@ -33,8 +33,8 @@ class quard_Copter(object):
         
     def set_speed(self,speed=np.random.rand(3)):
         self.Speed = speed   
-    def set_acceleration(self,acc=np.random.rand(3)):
-        self.Acc = acc     
+#    def set_acceleration(self,acc=np.random.rand(3)):
+#        self.Acc = acc     
     def set_location(self,loc=np.zeros(3)):
         self.P = loc
     def set_angle(self,angle=np.random.uniform(-0.2,0.2,3)):
@@ -43,8 +43,8 @@ class quard_Copter(object):
         self.pqr = pqr
     def set_I(self,I):
         self.I = I
-    def set_dpqr(self,dpqr=np.zeros(3)):
-        self.dpqr = dpqr
+#    def set_dpqr(self,dpqr=np.zeros(3)):
+#        self.dpqr = dpqr
     def set_Force(self,force=2*np.random.rand(4)):
         self.Force = force
     def set_Mass(self,mass):
@@ -124,10 +124,10 @@ class quard_Copter(object):
         return state,reward,done
     
     def reset(self):
-        self.set_acceleration()
+#        self.set_acceleration()
         self.set_angle()
         self.set_pqr()
-        self.set_dpqr()
+#        self.set_dpqr()
         self.set_speed()
         self.set_Force()
         self.set_location()
@@ -178,3 +178,4 @@ class quard_Copter(object):
 #
 #a = sim_Window()
 #a.run()
+
