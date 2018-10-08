@@ -15,107 +15,61 @@ HuberLoss = nn.functional.smooth_l1_loss
 MSELoss = nn.functional.mse_loss
 
 
-#def gen_Deterministic_Actor(state_dim,action_dim,action_lim,learing_rate=1e-4,h1_dim=256,h2_dim=128,h3_dim=128):  
-#    class Actor(nn.Module):
-#        def __init__(self,
-#                     state_dim,
-#                     action_dim,
-#                     action_lim,
-#                     h1_dim,
-#                     h2_dim,
-#                     h3_dim):
-#            super(Actor,self).__init__()
-#            self.fc_sh1 = nn.Linear(state_dim,h1_dim)
-#            nn.init.xavier_uniform_(self.fc_sh1.weight)
-#            self.fc_sh1.bias.data.fill_(0.02)
-#            
-#            self.fc_h1h2 = nn.Linear(h1_dim,h2_dim)
-#            nn.init.xavier_uniform_(self.fc_h1h2.weight)
-#            self.fc_h1h2.bias.data.fill_(0.02)
-#            
-#            self.fc_h2a = nn.Linear(h2_dim,action_dim)
-#            nn.init.xavier_uniform_(self.fc_h2a.weight)
-#            self.fc_h2a.bias.data.fill_(0.02)
-#            
-#            self.fc_h2h3 = nn.Linear(h2_dim,h3_dim)
-#            nn.init.xavier_uniform_(self.fc_h2h3.weight)
-#            self.fc_h2h3.bias.data.fill_(0.02)
-#            
-#            self.fc_h3a = nn.Linear(h3_dim,action_dim)
-#            nn.init.xavier_uniform_(self.fc_h3a.weight)
-#            self.fc_h3a.bias.data.fill_(0.02)
-#            
-#            self.tanh = nn.Tanh()
-#            self.relu = nn.ReLU()
-#            
-#            self.h1_dim = h1_dim
-#            self.h2_dim = h2_dim
-#            self.h3_dim = h3_dim
-#            self.action_lim = action_lim
-##            self.bn_h2 = nn.BatchNorm1d(h2_dim)
-#
-#            
-#        def forward(self,state,mode='sim'):
-#            h1 = self.relu(self.fc_sh1(state))
-#            h2 = self.fc_h1h2(h1)
-#            h2 = self.relu(h2)
-#            h3 = self.relu(self.fc_h2h3(h2))
-#            action_score = self.fc_h3a(h3)
-#            action = self.tanh(action_score)*self.action_lim
-#            return action
-#    
-#    pi = Actor(state_dim,action_dim,action_lim,h1_dim,h2_dim,h3_dim).to(device)
-#    optim_pi = optim.RMSprop(pi.parameters(),lr=learing_rate)
-#
-#    return pi,optim_pi
-#
-#
-#
-#
-#
-#def gen_Critic(state_dim,action_dim,q_dim=1,learnig_rate=4e-4,h1_dim=256,h2_dim=128): 
-#    class Critic(nn.Module):
-#        def __init__(self,
-#                     state_dim,
-#                     action_dim,
-#                     q_dim,
-#                     h1_dim,
-#                     h2_dim):
-#            super(Critic,self).__init__()
-#            self.fc_sah1 = nn.Linear(state_dim+action_dim,h1_dim)
-#            nn.init.xavier_uniform_(self.fc_sah1.weight)
-#            self.fc_sah1.bias.data.fill_(0.02)
-#            
-#            self.fc_h1h2 = nn.Linear(h1_dim,h2_dim)
-#            nn.init.xavier_uniform_(self.fc_h1h2.weight)
-#            self.fc_h1h2.bias.data.fill_(0.02)
-#            
-#            self.fc_h2q = nn.Linear(h2_dim,1)
-#            nn.init.xavier_uniform_(self.fc_h2q.weight)
-#            self.fc_h2q.bias.data.fill_(0.02)
-#            
-#            self.relu = nn.ReLU()
-#            
-#            self.h1_dim = h1_dim
-#            self.h2_dim = h2_dim
-#            
-#            self.bn_h1 = nn.BatchNorm1d(h1_dim)
-#            
-#        def forward(self,s,a,mode='sim'):
-#            if len(a.size())>1:
-#                sa = torch.cat((s,a),1)
-#            else:
-#                sa = torch.cat((s,a.view(-1,1)),1)
-#            h1 = self.fc_sah1(sa)
-#            h1 = self.relu(h1)
-#            h2 = self.relu(self.fc_h1h2(h1))
-#            q = self.fc_h2q(h2)
-#            return q
-#        
-#    q = Critic(state_dim,action_dim,q_dim,h1_dim,h2_dim).to(device)
-#    optim_q = optim.RMSprop(q.parameters(),lr=learnig_rate)
-#    
-#    return q,optim_q
+def gen_LowDim_Deterministic_Actor(state_dim,action_dim,action_lim,learing_rate=1e-4,h1_dim=400,h2_dim=300):  
+    config = {'struct':[nn.Linear(state_dim,h1_dim),
+                        nn.ReLU(),
+                        nn.Linear(h1_dim,h2_dim),
+                        nn.ReLU(),
+                        nn.Linear(h2_dim,action_dim),
+                        nn.Tanh(),
+                        ],
+              'linear_Weight_Config':[['uniform',-state_dim**0.5,state_dim**0.5],
+                                      ['uniform',-h1_dim**0.5,h1_dim**0.5],
+                                      ['uniform',-3e-3,3e-3]],
+              'linear_Bias_Config':[0.01],
+            }
+    class actor(net):
+        def __init__(self,config):
+            net.__init__(self,config)
+        def forward(self,state):
+            score = self.graph(state)
+            action = action_lim*score
+            return action
+    pi = net(config).to(device)
+    optim_pi = optim.Adam(pi.parameters(),lr=learing_rate)
+
+    return pi,optim_pi
+
+
+
+def gen_LowDim_Deterministic_Critic(state_dim,action_dim,learnig_rate=1e-3,h1_dim=400,h2_dim=300): 
+    config = {'struct':[nn.Linear(state_dim,h1_dim),
+                        nn.ReLU(),
+                        nn.Linear(h1_dim+action_dim,h2_dim),
+                        nn.ReLU(),
+                        nn.Linear(h2_dim,1),
+                        ],
+              'linear_Weight_Config':[['uniform',-state_dim**0.5,state_dim**0.5],
+                                      ['uniform',-(h1_dim+action_dim)**0.5,(h1_dim+action_dim)**0.5],
+                                      ['uniform',-3e-3,3e-3]],
+              'linear_Bias_Config':[0.01],                  
+            }
+    
+    class critic(net):
+        def __init__(self,config):
+            net.__init__(self,config)
+        def forward(self,state,action):
+            h = self.graph[0:2](state)
+            if len(action.size())>1:
+                q = self.graph[2:](torch.cat((h,action),1))
+            else:
+                q = self.graph[2:](torch.cat((h,action.view(-1,1)),1))
+            return q
+        
+    q = critic(config).to(device)
+    optim_q = optim.Adam(q.parameters(),lr=learnig_rate)
+    
+    return q,optim_q
 
 
 class net(nn.Module):
@@ -152,7 +106,7 @@ class net(nn.Module):
 
     def forward(self,input_info):
         return self.graph(input_info)
-
+        
 def setup_Config_Linear_Weight(config):
     
     global config_Weight_Mode,config_Weight_Param
@@ -176,6 +130,7 @@ def init_Linear_Bias(m):
     if type(m) == nn.Linear:
         m.bias.data.fill_(config_Bias_Param)
 
-
-
-
+a,z = gen_LowDim_Deterministic_Actor(4,1,2)
+q,_ = gen_LowDim_Deterministic_Critic(4,1)
+print(torch.FloatTensor(1).size())
+print(q(torch.rand(4),torch.FloatTensor(1)))
