@@ -6,47 +6,56 @@ Created on Fri Sep 21 16:46:32 2018
 @author: ZhangYaoZhong
 """
 import numpy as np
-#from tensorboardX import SummaryWriter
 import NN_Models
 import utils
 import simulator
 import torch
 
-gym_list = ['Pendulum-v0']
+board = utils.Board()
+
+gym_list = ['Pendulum-v0','CartPole-v1','LunarLander-v2',]
 
 
 def train_DDPG(config_DDPG,config_sim,config_Actor,config_Critic):
     
     sim_steps,env_name,do_render = config_sim
     train_eps,tau,gamma,mini_batch_size = config_DDPG
-    h1_dim_pi,h2_dim_pi,h3_dim_pi,lr_pi = config_Actor
-    q_dim,h1_dim_q,h2_dim_q,lr_q = config_Critic
+    lr_pi,h1_dim_pi,h2_dim_pi = config_Actor#,h3_dim_pi
+    lr_q,h1_dim_q,h2_dim_q = config_Critic
     
-    if env_name in gym_list:
-        env = simulator.Sim_Gym(env_name,do_render)
-        
-    elif env_name == 'quard_Copter':
-        env = simulator.Sim_QC()
-        
+    env = simulator.Simulator(env_name)
+            
     s_dim = env.state_dim
     a_dim = env.action_dim
     a_lim = float(env.action_lim)
     
-    pi_e,optim_pi_e = NN_Models.gen_Deterministic_Actor(s_dim,a_dim,a_lim,\
-                                                        lr_pi,h1_dim_pi,h2_dim_pi,h3_dim_pi)
-    pi_t,_ = NN_Models.gen_Deterministic_Actor(s_dim,a_dim,a_lim,lr_pi,\
-                                               h1_dim_pi,h2_dim_pi,h3_dim_pi)
-    q_e,optim_q_e = NN_Models.gen_Critic(s_dim,a_dim,q_dim,lr_q,h1_dim_q,h2_dim_q)
-    q_t,_ = NN_Models.gen_Critic(s_dim,a_dim,q_dim,lr_q,h1_dim_q,h2_dim_q)
+    s_init = env.env.reset()
+    a_init = env.env.action_space.sample()
+    s_next_init,r_init,_,_ = env.env.step(a_init)
+    memory = {'state':s_init,
+              'action':a_init,
+              'state_next':s_next_init,
+              'reward':r_init,}
+    memory_size = 2e5
+        
+    pi_e,optim_pi_e = NN_Models.gen_LowDim_Deterministic_Actor(s_dim,a_dim,a_lim,\
+                                                        lr_pi,h1_dim_pi,h2_dim_pi)
+    pi_t,_ = NN_Models.gen_LowDim_Deterministic_Actor(s_dim,a_dim,a_lim,lr_pi,\
+                                               h1_dim_pi,h2_dim_pi)
+    q_e,optim_q_e = NN_Models.gen_LowDim_Deterministic_Critic(s_dim,a_dim,lr_q,h1_dim_q,h2_dim_q)
+    q_t,_ = NN_Models.gen_LowDim_Deterministic_Critic(s_dim,a_dim,lr_q,h1_dim_q,h2_dim_q)
     
     utils.direct_copy(pi_e,pi_t)
     utils.direct_copy(q_e,q_t)
     
         
     for i in range(train_eps):
-        batch = env.sim_explore(pi_e,sim_steps,do_render)
-       
-        mini_batch = utils.sample_mini_batch(batch,mini_batch_size)
+#        pi_e.eval()
+        batch = env.sim_explore_DDPG(pi_e,sim_steps,do_render)
+        
+        utils.update_trasitions(memory,batch,memory_size)
+        
+        mini_batch = utils.sample_mini_batch(memory,mini_batch_size)
         s_mini_batch,s_next_mini_batch,a_mini_batch,r_mini_batch = mini_batch
             
         a_mini_batch = torch.from_numpy(a_mini_batch).float().to(NN_Models.device)
@@ -54,7 +63,7 @@ def train_DDPG(config_DDPG,config_sim,config_Actor,config_Critic):
         s_mini_batch = torch.from_numpy(s_mini_batch).float().to(NN_Models.device)
         s_next_mini_batch = torch.from_numpy(s_next_mini_batch).float().to(NN_Models.device)
         
-        a_next_mini_batch = pi_t(s_next_mini_batch).detach()
+        a_next_mini_batch = pi_t(s_next_mini_batch,mode='train').detach()#,mode='train'
         
         
         y = r_mini_batch.view(-1,1)+gamma*q_t(s_next_mini_batch,a_next_mini_batch).detach()
@@ -70,8 +79,9 @@ def train_DDPG(config_DDPG,config_sim,config_Actor,config_Critic):
         '''
         update Actor Pi_explore(s)
         '''
+        pi_e.train()
         optim_pi_e.zero_grad()
-        a_e = pi_e(s_mini_batch)
+        a_e = pi_e(s_mini_batch,mode='train')#mode='train'
         q_sum = -q_e(s_mini_batch,a_e).mean()
         q_sum.backward()
         optim_pi_e.step()
@@ -86,11 +96,18 @@ def train_DDPG(config_DDPG,config_sim,config_Actor,config_Critic):
         utils.soft_update(pi_e,pi_t,tau)
         
         '''
+        tensorboard visulization
+        '''
+        _,_,_,r_batch = batch
+        print(i,' th update : ',r_batch.mean())
+#        if i%500 == 0:
+#            board.scalar(i,r_mean=r_batch.mean())
+        
+        '''
         save model
         '''
-        if i>0 and i%20000 == 0:
+        if i>0 and i%2000 == 0:
             file_name = 'pi_iter'+str(i)+'.pth'
             torch.save(pi_t.state_dict(),file_name)
             
-
 

@@ -1,12 +1,13 @@
 import numpy as np
-from direct.showbase.ShowBase import ShowBase
-from panda3d.core import *
+#from direct.showbase.ShowBase import ShowBase
+#from panda3d.core import *
 import NN_Models
-import vis3D
+from mayavi import mlab
+
 
 device = NN_Models.device
 
-pi,_ = NN_Models.gen_Deterministic_Actor(12,4,2)
+#pi,_ = NN_Models.gen_Deterministic_Actor(12,4,2)
 
 class quard_Copter(object):
     
@@ -31,10 +32,10 @@ class quard_Copter(object):
         self.action_lim = 2.
         self.dt = 0.05
         
+        
+        
     def set_speed(self,speed=np.random.rand(3)):
         self.Speed = speed   
-#    def set_acceleration(self,acc=np.random.rand(3)):
-#        self.Acc = acc     
     def set_location(self,loc=np.zeros(3)):
         self.P = loc
     def set_angle(self,angle=np.random.uniform(-0.2,0.2,3)):
@@ -43,8 +44,6 @@ class quard_Copter(object):
         self.pqr = pqr
     def set_I(self,I):
         self.I = I
-#    def set_dpqr(self,dpqr=np.zeros(3)):
-#        self.dpqr = dpqr
     def set_Force(self,force=2*np.random.rand(4)):
         self.Force = force
     def set_Mass(self,mass):
@@ -124,18 +123,23 @@ class quard_Copter(object):
         return state,reward,done
     
     def reset(self):
-#        self.set_acceleration()
         self.set_angle()
         self.set_pqr()
-#        self.set_dpqr()
         self.set_speed()
         self.set_Force()
         self.set_location()
         
         state = [self.P,self.Speed,self.Angle,self.pqr]
+        
+#        self.point = mlab.plot3d(self.P)
         return state
-
-
+    
+#    @mlab.animate
+    def render(self):
+        mlab.points3d(self.P[0],self.P[1],self.P[2],2)
+#        while True:
+#            self.point.mlab_source = self.P
+#            yield
 
 
 #class sim_Window(ShowBase):
