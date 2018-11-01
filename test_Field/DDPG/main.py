@@ -8,15 +8,23 @@ Created on Thu Sep 27 21:55:15 2018
 
 from train_Funcs import *
 
-config_sim = [80,'Pendulum-v0',True]
-config_DDPG = [50000,0.001,0.99,40]
-config_Actor = [1e-4,400,300]#,128
-config_Critic = [1e-3,400,300]
+config_train = {'sim_steps':80,
+                'env_name':'Pendulum-v0',
+                'do_demonstrate':True,
+                'do_render_train':False,
+                'train_eps':20000,
+                'tau':1e-3,
+                'gamma':0.99,
+                'mini_batch_size':[40,200,400],
+                'mini_batch_ancor':[0,100,200],
+                'theta':0.15,
+                'sig':0.2,
+                'on_TensorBoard':False,
+                'save_model_interval':1000,}
+config_Actor = {'lr':1e-4,
+                'h_dim':[400,300],}
+config_Critic = {'lr':1e-3,
+                 'h_dim':[400,300],}
 
-'''
-    sim_steps,env_name,do_render = config_sim
-    train_eps,tau,gamma,mini_batch_size = config_DDPG
-    lr_pi,h1_dim_pi,h2_dim_pi = config_Actor
-    lr_q,q_dim,h1_dim_q,h2_dim_q = config_Critic
-'''
-train_DDPG(config_DDPG,config_sim,config_Actor,config_Critic)
+
+DDPG_naive(config_train,config_Actor,config_Critic)

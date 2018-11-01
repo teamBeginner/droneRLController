@@ -20,10 +20,12 @@ def soft_update(source,target,tau):
     for param_s,param_t in zip(source.parameters(),target.parameters()):
         param_t.data.copy_(param_s.data*tau+(1-tau)*param_t.data)
 
-
+def declare_dict_args(dic):
+    for key,val in dic.items():
+        exec(key+'='+str(val))
 
 class OU_process(object):
-    def __init__(self,action_dim,dt=0.02,theta=0.1,mu=0.,sig=0.3):
+    def __init__(self,action_dim,dt=0.02,theta=0.15,sig=0.2,mu=0.):
         self.X = np.ones(action_dim)*mu
         self.theta = theta
         self.mu = mu
