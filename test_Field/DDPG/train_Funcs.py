@@ -225,6 +225,7 @@ def DDPG_naive(config_train,config_Actor,config_Critic):#config_DDPG,config_sim,
     demonstrate
     '''
     if do_demonstrate:
-        env.sim_inference_DDPG(pi_t,sim_steps,do_demonstrate)
+        while True:
+            env.sim_inference_DDPG(pi_t,150,do_demonstrate)
             
 
