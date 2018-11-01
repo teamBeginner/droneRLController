@@ -197,20 +197,20 @@ def DDPG_naive(config_train,config_Actor,config_Critic):#config_DDPG,config_sim,
         if on_TensorBoard:
             if ep%200 == 0:
                 board.scalar(ep,r_mean_explore=r_batch_e.mean())
-                board.hist(ep,pi_e_fc1=pi_e.fc1.weight,
-                           pi_e_fc2=pi_e.fc2.weight,
-                           pi_e_fc3=pi_e.fc3.weight,
-                           q_e_fc1=q_e.fc1.weight,
-                           q_e_fc2=q_e.fc2.weight,
-                           q_e_fc3=q_e.fc3.weight)
+                board.hist(ep,pi_e_fc1=pi_e.fc1.state_dict()['weight'].cpu().numpy(),
+                           pi_e_fc2=pi_e.fc2.state_dict()['weight'].cpu().numpy(),
+                           pi_e_fc3=pi_e.fc3.state_dict()['weight'].cpu().numpy(),
+                           q_e_fc1=q_e.fc1.state_dict()['weight'].cpu().numpy(),
+                           q_e_fc2=q_e.fc2.state_dict()['weight'].cpu().numpy(),
+                           q_e_fc3=q_e.fc3.state_dict()['weight'].cpu().numpy())
                 if compare_et:
                     board.scalar(ep,r_mean_inference=r_batch_t.mean())
-                    board.hist(ep,pi_t_fc1=pi_t.fc1.weight,
-                               pi_t_fc2=pi_t.fc2.weight,
-                               pi_t_fc3=pi_t.fc3.weight,
-                               q_t_fc1=q_t.fc1.weight,
-                               q_t_fc2=q_t.fc2.weight,
-                               q_t_fc3=q_t.fc3.weight,)
+                    board.hist(ep,pi_t_fc1=pi_t.fc1.state_dict()['weight'].cpu().numpy(),
+                               pi_t_fc2=pi_t.fc2.state_dict()['weight'].cpu().numpy(),
+                               pi_t_fc3=pi_t.fc3.state_dict()['weight'].cpu().numpy(),
+                               q_t_fc1=q_t.fc1.state_dict()['weight'].cpu().numpy(),
+                               q_t_fc2=q_t.fc2.state_dict()['weight'].cpu().numpy(),
+                               q_t_fc3=q_t.fc3.state_dict()['weight'].cpu().numpy(),)
             
 
         
