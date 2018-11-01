@@ -20,7 +20,8 @@ config_train = {'sim_steps':80,
                 'theta':0.15,
                 'sig':0.2,
                 'on_TensorBoard':False,
-                'save_model_interval':1000,}
+                'save_model_interval':1000,
+                'compare_et':True,}
 config_Actor = {'lr':1e-4,
                 'h_dim':[400,300],}
 config_Critic = {'lr':1e-3,

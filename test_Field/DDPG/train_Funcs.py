@@ -51,6 +51,9 @@ def DDPG_naive(config_train,config_Actor,config_Critic):#config_DDPG,config_sim,
         
         save_model_interval
         --save the model every interval
+        
+        compare_et
+        --whether to compare between explore and target networks.
     ---------------------------------------------------------------------
     
     config_Actor provides configuration parameters for Actor nerual network
@@ -84,6 +87,8 @@ def DDPG_naive(config_train,config_Actor,config_Critic):#config_DDPG,config_sim,
     theta = config_train['theta']
     sig = config_train['sig']
     save_model_interval = config_train['save_model_interval']
+    compare_et = config_train['compare_et']
+    
     
     lr_pi = config_Actor['lr']
     h1_dim_pi,h2_dim_pi = config_Actor['h_dim']
@@ -126,7 +131,7 @@ def DDPG_naive(config_train,config_Actor,config_Critic):#config_DDPG,config_sim,
     if on_TensorBoard:
         board = utils.Board()
 
-    for ep in range(train_eps):
+    for ep in range(train_eps+1):
         for i in range(len(mini_batch_ancor)):  
             if ep >= mini_batch_ancor[i]:
                 mbs = mini_batch_size[i]
@@ -184,15 +189,28 @@ def DDPG_naive(config_train,config_Actor,config_Critic):#config_DDPG,config_sim,
         '''
         if ep%20 ==0:
             _,_,_,r_batch_e = batch
-            _,_,_,r_batch_t = env.sim_inference_DDPG(pi_t,sim_steps,do_render_train)
             print('exploration actor ',ep,' th update : ',r_batch_e.mean())
-            print('target actor ',ep,' th update : ',r_batch_t.mean())
+            if compare_et:
+                _,_,_,r_batch_t = env.sim_inference_DDPG(pi_t,sim_steps,do_render_train)
+                print('target actor ',ep,' th update : ',r_batch_t.mean())
 
         if on_TensorBoard:
             if ep%200 == 0:
-                board.scalar(ep,r_mean_explore=r_batch_e.mean(),
-                             r_mean_inference=r_batch_t.mean())
-                board.hist(ep,)
+                board.scalar(ep,r_mean_explore=r_batch_e.mean())
+                board.hist(ep,pi_e_fc1=pi_e.fc1.weight,
+                           pi_e_fc2=pi_e.fc2.weight,
+                           pi_e_fc3=pi_e.fc3.weight,
+                           q_e_fc1=q_e.fc1.weight,
+                           q_e_fc2=q_e.fc2.weight,
+                           q_e_fc3=q_e.fc3.weight)
+                if compare_et:
+                    board.scalar(ep,r_mean_inference=r_batch_t.mean())
+                    board.hist(ep,pi_t_fc1=pi_t.fc1.weight,
+                               pi_t_fc2=pi_t.fc2.weight,
+                               pi_t_fc3=pi_t.fc3.weight,
+                               q_t_fc1=q_t.fc1.weight,
+                               q_t_fc2=q_t.fc2.weight,
+                               q_t_fc3=q_t.fc3.weight,)
             
 
         
