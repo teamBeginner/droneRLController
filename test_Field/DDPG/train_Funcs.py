@@ -13,9 +13,6 @@ import torch
 
 def DDPG_naive(config_train,config_Actor,config_Critic):#config_DDPG,config_sim,config_Actor,config_Critic
     
-#    utils.declare_dict_args(config_train)
-#    utils.declare_dict_args(config_Actor)
-#    utils.declare_dict_args(config_Critic)
     '''
     A naive DDPG implementation without batch normalization for its lacking
     in stationarity of states in many simulation enviroments.(well,at least
@@ -52,7 +49,7 @@ def DDPG_naive(config_train,config_Actor,config_Critic):#config_DDPG,config_sim,
         save_model_interval
         --save the model every interval
         
-        compare_et
+        comparation
         --whether to compare between explore and target networks.
     ---------------------------------------------------------------------
     
@@ -74,6 +71,17 @@ def DDPG_naive(config_train,config_Actor,config_Critic):#config_DDPG,config_sim,
         --list contained with hidden layer dimension size
     '''
     
+#    utils.declare_dict_args(config_train)
+#    
+#    utils.declare_dict_args(config_Actor)
+#    lr_pi = lr
+#    h1_dim_pi,h2_dim_pi = h_dim
+#    optim_pi = optimizer
+#    
+#    utils.declare_dict_args(config_Critic)
+#    lr_q = lr
+#    h1_dim_q,h2_dim_q = h_dim
+#    optim_q = optimizer
     sim_steps = config_train['sim_steps']
     env_name = config_train['env_name']
     do_render_train = config_train['do_render_train']
@@ -87,14 +95,16 @@ def DDPG_naive(config_train,config_Actor,config_Critic):#config_DDPG,config_sim,
     theta = config_train['theta']
     sig = config_train['sig']
     save_model_interval = config_train['save_model_interval']
-    compare_et = config_train['compare_et']
-    
+    comparation = config_train['comparation']
+    memory_size = config_train['memory_size']
     
     lr_pi = config_Actor['lr']
     h1_dim_pi,h2_dim_pi = config_Actor['h_dim']
+    optim_pi = config_Actor['optimizer']
     
     lr_q = config_Critic['lr']
     h1_dim_q,h2_dim_q = config_Critic['h_dim']
+    optim_q = config_Critic['optimizer']
     
     env = simulator.Simulator(env_name)
             
@@ -111,16 +121,14 @@ def DDPG_naive(config_train,config_Actor,config_Critic):#config_DDPG,config_sim,
               'action':a_init,
               'state_next':s_next_init,
               'reward':r_init,}
-    
-    memory_size = 1e5
         
     pi_e,optim_pi_e = NN_Models.gen_LowDim_Deterministic_Actor(s_dim,a_dim,s_max,a_max,\
-                                                        lr_pi,h1_dim_pi,h2_dim_pi)
-    pi_t,_ = NN_Models.gen_LowDim_Deterministic_Actor(s_dim,a_dim,s_max,a_max,lr_pi,\
+                                                        optim_pi,lr_pi,h1_dim_pi,h2_dim_pi)
+    pi_t,_ = NN_Models.gen_LowDim_Deterministic_Actor(s_dim,a_dim,s_max,a_max,optim_pi,lr_pi,\
                                                h1_dim_pi,h2_dim_pi)
     q_e,optim_q_e = NN_Models.gen_LowDim_Deterministic_Critic(s_dim,a_dim,s_max,a_max,\
-                                                              lr_q,h1_dim_q,h2_dim_q)
-    q_t,_ = NN_Models.gen_LowDim_Deterministic_Critic(s_dim,a_dim,s_max,a_max,lr_q,\
+                                                              optim_q,lr_q,h1_dim_q,h2_dim_q)
+    q_t,_ = NN_Models.gen_LowDim_Deterministic_Critic(s_dim,a_dim,s_max,a_max,optim_q,lr_q,\
                                                       h1_dim_q,h2_dim_q)
     
     utils.direct_copy(pi_e,pi_t)
@@ -190,7 +198,7 @@ def DDPG_naive(config_train,config_Actor,config_Critic):#config_DDPG,config_sim,
         if ep%20 ==0:
             _,_,_,r_batch_e = batch
             print('exploration actor ',ep,' th update : ',r_batch_e.mean())
-            if compare_et:
+            if comparation:
                 _,_,_,r_batch_t = env.sim_inference_DDPG(pi_t,sim_steps,do_render_train)
                 print('target actor ',ep,' th update : ',r_batch_t.mean())
 
@@ -203,7 +211,7 @@ def DDPG_naive(config_train,config_Actor,config_Critic):#config_DDPG,config_sim,
                            q_e_fc1=q_e.fc1.state_dict()['weight'].cpu().numpy(),
                            q_e_fc2=q_e.fc2.state_dict()['weight'].cpu().numpy(),
                            q_e_fc3=q_e.fc3.state_dict()['weight'].cpu().numpy())
-                if compare_et:
+                if comparation:
                     board.scalar(ep,r_mean_inference=r_batch_t.mean())
                     board.hist(ep,pi_t_fc1=pi_t.fc1.state_dict()['weight'].cpu().numpy(),
                                pi_t_fc2=pi_t.fc2.state_dict()['weight'].cpu().numpy(),

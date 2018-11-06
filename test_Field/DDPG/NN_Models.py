@@ -20,6 +20,7 @@ def gen_LowDim_Deterministic_Actor(state_dim,
                                    action_dim,
                                    state_max,
                                    action_max,
+                                   optimizer,
                                    learing_rate=1e-4,
                                    h1_dim=400,
                                    h2_dim=300,
@@ -116,8 +117,12 @@ def gen_LowDim_Deterministic_Actor(state_dim,
 #                return action
             
     pi = actor().to(device)
-    optim_pi = optim.Adam(pi.parameters(),lr=learing_rate)
-
+    if optimizer == 'RMSprop':
+        optim_pi = optim.RMSprop(pi.parameters(),lr=learing_rate)
+    elif opitizer == 'Adam':
+        optim_pi = optim.Adam(pi.parameters(),lr=learing_rate)
+        
+        
     return pi,optim_pi
 
 
@@ -126,6 +131,7 @@ def gen_LowDim_Deterministic_Critic(state_dim,
                                     action_dim,
                                     state_max,
                                     action_max,
+                                    optimizer,
                                     learnig_rate=1e-3,
                                     h1_dim=400,
                                     h2_dim=300,): 
@@ -170,7 +176,10 @@ def gen_LowDim_Deterministic_Critic(state_dim,
             return q
             
     q = critic().to(device)
-    optim_q = optim.Adam(q.parameters(),lr=learnig_rate,weight_decay=1e-2)
+    if optimizer == 'RMSprop':
+        optim_q = optim.RMSprop(q.parameters(),lr=learnig_rate,weight_decay=1e-2)
+    elif optimizer == 'Adam':
+        optim_q = optim.Adam(q.parameters(),lr=learnig_rate,weight_decay=1e-2)
     
     return q,optim_q
 

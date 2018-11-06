@@ -12,7 +12,7 @@ import torch
 import utils
 import NN_Models
 import qc
-
+import time
 
 device = NN_Models.device
 
@@ -100,7 +100,8 @@ class Simulator(object):
         done = False
         
         while t <= T and not done:
-            if do_render:         
+            if do_render:    
+                time.sleep(0.01)
                 self.env.render()
                         
             action = pi(torch.from_numpy(state).float().to(device))\
